@@ -15,9 +15,15 @@ def pol2cart(mag, phi):
     y = mag * np.sin(phi)
     return(x + 1j*y)     
 
+def deg2rad(angle):
+    return angle*pi/180
+
+def rad2deg(angle):
+    return angle * 180/pi
+
 class Phasor:
     def __init__(self,mag,phase):
-        self.mag = mag
+        self.mag = abs(mag)
         self.phase = phase 
         self.angle = round(phase*180/pi,3)
         self.cartesian = self.get_cartesian()
@@ -30,8 +36,11 @@ class Phasor:
     def __repr__(self):
          return str(round(self.mag)) + '∠' + str(round(self.angle)) + "°"
     def __mul__(self,other):
-        if isinstance(other, (int, float)) and not isinstance(x, bool):
-            return Phasor(other*self.mag,self.phase)
+        if isinstance(other, (int, float)) and not isinstance(other, bool):
+            if other >= 0:
+                return Phasor(other*self.mag,self.phase)
+            else:
+                return Phasor(abs(other)*self.mag,self.phase+pi)
         elif isinstance(other, Phasor):
             return Phasor(self.mag*other.mag,self.phase+other.phase)
         elif isinstance(other,complex):
@@ -40,14 +49,12 @@ class Phasor:
 
         
     def __rmul__(self,other):
-        if isinstance(other, (int, float)) and not isinstance(x, bool):
-            return Phasor(other*self.mag,self.phase)
-        elif isinstance(other, Phasor):
-            return Phasor(self.mag*other.mag,self.phase+other.phase)
-        elif isinstance(other,complex):
-            z = self.cartesian * other
-            return cart2pol(z)
+        return self*other
     
+    def __abs__(self):
+        return self.mag
+
+
     def __add__(self,other):
         if isinstance(other,(int,float,complex)):
             z = self.cartesian + other
@@ -62,6 +69,8 @@ class Phasor:
 
     def __truediv__(self,other):
         if isinstance(other,(int,float)):
+            if other <0:
+                return(self/Phasor(abs(other),pi))
             return Phasor(self.mag/other,self.phase)
         elif isinstance(other,complex):
             div = cart2pol(other)
@@ -85,39 +94,19 @@ class Phasor:
             z = self.cartesian - other.cartesian
             return cart2pol(z)
 
-    def pol2cart(rho, phi):
-        x = rho * np.cos(phi)
-        y = rho * np.sin(phi)
-        return(x + 1j*y)     
-
-
     def get_cartesian(self):
         m = self.mag
         p = self.phase
         return m*(cos(p) + 1j*sin(p))
     
-    def get_conjugate(self):
+    def conjugate(self):
         return Phasor(self.mag,-self.phase)
-    def init_axis(self):
-        fig, ax = plt.subplots(figsize=(10,8))
-        # Set bottom and left spines as x and y axes of coordinate system
-        ax.spines['bottom'].set_position('zero')
-        ax.spines['left'].set_position('zero')
-        # Remove top and right spines
-        ax.spines['top'].set_visible(False)
-        ax.spines['right'].set_visible(False)
-        ax.grid(which='both', color='grey', linewidth=1, linestyle='-', alpha=0.2)
-        # Create 'x' and 'y' labels placed at the end of the axes
-        ax.set_xlabel(r'$\Re(z)$', size=14, labelpad=-24, x=1.03)
-        ax.set_ylabel('$\Im(z)$', size=14, labelpad=-21, y=1.02, rotation=0)
-    
-    def plot(self):
-        x = linspace(0,self.mag*cos(self.phase),2)
-        y = linspace(0,self.mag*sin(self.phase),2)
-        line = plt.plot(x,y,lw=2,alpha=0)
-        col = plt.gca().lines[-1].get_color()
-        plt.annotate('', xy=(0, 0),xycoords='data',xytext=(x[1],y[1]),textcoords='data',arrowprops=dict(arrowstyle='<|-',color=col,mutation_scale=25,lw=2))
-        plt.plot(-x,-y,alpha=0)
+
+    def rotate(self,angle):
+        return Phasor(self.mag,self.phase+angle)
+
+    def scale(self,scalar):
+        return Phasor(scalar*self.mag,self.phase)
 
 class Versor(Phasor):
         def __init__(self,phase):
@@ -130,14 +119,53 @@ class Versor(Phasor):
             self.imag = self.cartesian.imag
 
 
-v = Phasor(10,pi/3)
-a = Versor(2*pi/3)
-v2 = v *a
-v.init_axis()
-v.plot()
-v2.plot()
-v3 = v2 * a
+def init_axis():
+        fig, ax = plt.subplots(figsize=(10,8))
+        # Set bottom and left spines as x and y axes of coordinate system
+        ax.spines['bottom'].set_position('zero')
+        ax.spines['left'].set_position('zero')
+        # Remove top and right spines
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        arrow_fmt = dict(markersize=4, color='black', clip_on=False)
+        ax.plot((1), (0), marker='>', transform=ax.get_yaxis_transform(), **arrow_fmt)
+        ax.plot((0), (1), marker='^', transform=ax.get_xaxis_transform(), **arrow_fmt)
+        ax.grid(which='both', color='grey', linewidth=1, linestyle='-', alpha=0.2)
+        # Create 'x' and 'y' labels placed at the end of the axes
+        ax.set_xlabel(r'$\Re(z)$', size=14, labelpad=-24, x=1.03)
+        ax.set_ylabel('$\Im(z)$', size=14, labelpad=-21, y=1.02, rotation=0)
 
-v3.plot()
-plt.show()
-print(type(v3))
+        return (fig, ax)
+
+
+def plot_phasors(phasors):
+        fig, ax = init_axis()
+        cnt = 1
+        for phasor in phasors:
+            x = linspace(0,phasor.mag*cos(phasor.phase),2)
+            y = linspace(0,phasor.mag*sin(phasor.phase),2)
+            line = plt.plot(x,y,lw=2,alpha=0,label=str(phasor))
+            col = plt.gca().lines[-1].get_color()
+            plt.annotate('', xy=(0, 0),xycoords='data',xytext=(x[1],y[1]),textcoords='data',arrowprops=dict(arrowstyle='<|-',color=col,mutation_scale=25,lw=2)) 
+            if round(y[1]) == 0:
+                offset = 0.3
+            else:
+                offset = 0
+            plt.text(x[1],y[1]+offset,str(phasor))
+            plt.plot(-x,-y,alpha=0)
+            cnt +=1
+        plt.show()
+        return (fig,ax)
+
+
+# Showcase
+
+V = Phasor(4,pi/6)
+V2 = V / -1
+V3 = V *2 
+V4 = 2 * V
+I = 0.5 * V.rotate(pi/6)
+Ic1 = I * -1
+Ic2 = I.conjugate() 
+S = V * I.conjugate()
+plot_phasors([V,I,S,Ic1,Ic2,V2])
