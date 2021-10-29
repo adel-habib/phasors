@@ -4,6 +4,14 @@ from numpy import linspace, cos, sin, pi
 
 
 def cart2pol(z):
+    """[Forms a Phasor from a complex number]
+
+    Args:
+        z ([type]): [description]
+
+    Returns:
+        [type]: [description]
+    """    
     x = z.real
     y = z.imag
     mag = np.sqrt(x**2 + y**2)
@@ -21,9 +29,22 @@ def deg2rad(angle):
 def rad2deg(angle):
     return angle * 180/pi
 
+
+
 class Phasor:
     def __init__(self,mag,phase):
+        """[Forms a Phasor]
+
+        Args:
+            mag ([numeric]): [The magnitude of the phasor]
+            phase ([numeric]): [The angle of the phasor in radians]
+        """ 
+               
         self.mag = abs(mag)
+        if phase > 2*pi:
+            phase -= 2*pi
+        elif phase < 0:
+            phase += 2*pi
         self.phase = phase 
         self.angle = round(phase*180/pi,3)
         self.cartesian = self.get_cartesian()
@@ -53,7 +74,12 @@ class Phasor:
     
     def __abs__(self):
         return self.mag
-
+    
+    def __eq__(self,other):
+        if (self.mag == other.mag) and (self.phase == other.phase):
+            return True
+        else:
+            return False
 
     def __add__(self,other):
         if isinstance(other,(int,float,complex)):
@@ -94,6 +120,9 @@ class Phasor:
             z = self.cartesian - other.cartesian
             return cart2pol(z)
 
+    
+    def __neg__(self):
+        return Phasor(self.mag,self.phase+pi)
     def get_cartesian(self):
         m = self.mag
         p = self.phase
@@ -139,33 +168,37 @@ def init_axis():
 
 
 def plot_phasors(phasors):
-        fig, ax = init_axis()
-        cnt = 1
-        for phasor in phasors:
-            x = linspace(0,phasor.mag*cos(phasor.phase),2)
-            y = linspace(0,phasor.mag*sin(phasor.phase),2)
-            line = plt.plot(x,y,lw=2,alpha=0,label=str(phasor))
-            col = plt.gca().lines[-1].get_color()
-            plt.annotate('', xy=(0, 0),xycoords='data',xytext=(x[1],y[1]),textcoords='data',arrowprops=dict(arrowstyle='<|-',color=col,mutation_scale=25,lw=2)) 
-            if round(y[1]) == 0:
-                offset = 0.3
-            else:
-                offset = 0
-            plt.text(x[1],y[1]+offset,str(phasor))
-            plt.plot(-x,-y,alpha=0)
-            cnt +=1
-        plt.show()
-        return (fig,ax)
+    """[Plots a list of phasors or complex numbers in the complex cartesian plane]
+
+    Args:
+        phasors ([list]): [A list or numpy array of Phasors / complex numbers or both]
+
+    Returns:
+        [Figure, Axis]: [Returns a Figure and Axis Objects]
+    """    
+    fig, ax = init_axis()
+    cnt = 1
+    for phasor in phasors:
+        if isinstance(phasor,complex):
+            phasor = cart2pol(phasor)
+        x = linspace(0,phasor.mag*cos(phasor.phase),2)
+        y = linspace(0,phasor.mag*sin(phasor.phase),2)
+        line = plt.plot(x,y,lw=2,alpha=0,label=str(phasor))
+        col = plt.gca().lines[-1].get_color()
+        plt.annotate('', xy=(0, 0),xycoords='data',xytext=(x[1],y[1]),textcoords='data',arrowprops=dict(arrowstyle='<|-',color=col,mutation_scale=25,lw=2)) 
+        if round(y[1]) == 0:
+            offset = 0.3
+        else:
+            offset = 0
+        plt.text(x[1],y[1]+offset,str(phasor))
+        plt.plot(-x,-y,alpha=0)
+        cnt +=1
+    plt.show()
+    return (fig,ax)
 
 
-# Showcase
-
-V = Phasor(4,pi/6)
-V2 = V / -1
-V3 = V *2 
-V4 = 2 * V
-I = 0.5 * V.rotate(pi/6)
-Ic1 = I * -1
-Ic2 = I.conjugate() 
-S = V * I.conjugate()
-plot_phasors([V,I,S,Ic1,Ic2,V2])
+v = Phasor(4,pi/6)
+i = Phasor(2,pi/3)
+p = v * i.conjugate()
+z = 1 +2j
+print(type(z))
