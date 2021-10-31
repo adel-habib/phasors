@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt 
 import numpy as np 
-from numpy import linspace, cos, sin, pi
+from numpy import arctan2, linspace, cos, sin, pi
 from numpy.lib.arraysetops import isin 
 from typing import List
 
@@ -65,7 +65,7 @@ def sym_com(l1,l2,l3):
 
 
 class Phasor:
-    def __init__(self,mag : float =1,phase : float =0,z : complex = None):
+    def __init__(self,mag : float =1,phase : float =0,z : complex = None,):
         """[Forms a Phasor with magnitude and angle or using a complex number z.]
 
         Args:
@@ -90,6 +90,7 @@ class Phasor:
                 phase -= 2*pi
             elif phase < 0:
                 phase += 2*pi
+            
                 
         self.mag = abs(mag)
         self.phase = phase 
@@ -125,6 +126,8 @@ class Phasor:
         elif isinstance(other,Phasor):
             z = self.cartesian - other.cartesian
             return cart2pol(z)
+    def __rsub__(self,other):
+        return -self + other
 
     def __neg__(self):
         return Phasor(self.mag,self.phase+pi)
@@ -264,6 +267,8 @@ def plot_phasors(phasors):
     return (fig,ax)
 
 def plot_vector(vector,Line=None):
+    if(isinstance(vector,(complex,float))):
+        vector = Phasor(z=vector)
     x = linspace(0,vector.mag*cos(vector.phase),2)
     y = linspace(0,vector.mag*sin(vector.phase),2)
     plt.plot(x,y,lw=2,alpha=0,label=str(vector))
@@ -300,3 +305,5 @@ def plot_sc(sym_com):
             plot_vector(sym_com[i],1)
             plot_vector(sym_com[i]*a,2)
             plot_vector(sym_com[i]*(a**2),3)
+
+
