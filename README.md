@@ -1,2 +1,2 @@
-# power_analysis
-A small project to automate power analysis complex calculations 
+# Phasors
+A project to automate complex calculations and plots speficially tailored for Electrical engineering
