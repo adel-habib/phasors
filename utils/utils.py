@@ -1,7 +1,15 @@
 
-from numpy import cos, sin, pi, sqrt, arctan2
+from numpy import cos, sin, pi, sqrt, arctan2, angle
 import numpy as np
-#from phasors import phasor, versor
+
+def cart2pol(z : complex):
+
+    if isinstance(z,(int,float)):
+        z = complex(z)
+
+    mag = abs(z)
+    phi = angle(z)
+    return mag, phi
 
 def pol2cart(mag : float, phi : float) -> complex:
     x = mag * cos(phi)
@@ -56,3 +64,4 @@ def rad2deg(angle : float) -> float:
 #             Ls[i] = cart2pol(Ls[i])
 
 #     return Ls
+
