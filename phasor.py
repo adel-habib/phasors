@@ -9,37 +9,29 @@ class Phasor(object):
     instances = []
     instances_num = 0
 
-    def __init__(self,mag : float =1,phase : float =0,z : complex = None,):
-        """[Forms a Phasor with magnitude and angle or using a complex number z.]
+    def __init__(self,mag : float =1,phase : float =0,):
+        """[Forms a Phasor with magnitude and angle]
 
         Args:
             mag ([numeric]): [The magnitude of the phasor]
             phase ([numeric]): [The angle of the phasor in radians]
         """ 
-        if z:
-            if(isinstance(z,(int,float))):
-                z = complex(z)
-            if(isinstance(z,complex)):
-                mag = abs(z)
-                phase = angle(z)
-        else:
-            if round(abs(mag),10) ==0:
+        
+        if round(abs(mag),10) ==0:
                 mag = 0
                 phase = 0
                 
-            if phase > 2*pi:
+        if  phase >= 2*pi:
                 phase -= 2*pi
-            elif phase < 0:
+        elif phase < 0:
                 phase += 2*pi
             
                 
         self._mag = abs(mag)
-        self._phase = phase 
-        self._angle = round(phase*180/pi,3)
-        if z:
-            self._cartesian = z
-        else:
-            self._cartesian = self.get_cartesian()
+        self._phase = round_phase(phase) 
+        self._angle = round_phase(phase*180/pi)
+
+        self._cartesian = self.get_cartesian()
         self._real = self._cartesian.real
         self._imag = self._cartesian.imag
 
@@ -103,6 +95,7 @@ class Phasor(object):
         if isinstance(other,(int,float,complex)):
             z = self._cartesian - other
             mag, phase = cart2pol(z)
+            print("SUB --- MAG is: {}, PHASE IS: {}".format(mag,phase))
             return Phasor(mag,phase)
 
         elif isinstance(other,Phasor):
@@ -119,16 +112,16 @@ class Phasor(object):
         Returns:
             [phasor]: [a phasor pointing to the opposite direction of the original phasor]
         """
-        return Phasor(self._mag,self._phase+pi)
+        return Phasor(self.mag,self.phase+pi)
 
     def __mul__(self,other):
         if isinstance(other, (int, float)) and not isinstance(other, bool):
             if other >= 0:
-                return Phasor(other*self._mag,self._phase)
+                return Phasor(other*self.mag,self.phase)
             else:
-                return Phasor(abs(other)*self._mag,self._phase+pi)
+                return Phasor(abs(other)*self.mag,self.phase+pi)
         elif isinstance(other, Phasor):
-            return Phasor(self._mag*other._mag,self._phase+other._phase)
+            return Phasor(self._mag*other._mag,self.phase+other.phase)
         elif isinstance(other,complex):
             z = self._cartesian * other
             return cart2pol(z)
@@ -141,44 +134,47 @@ class Phasor(object):
         if isinstance(other,(int,float)):
             if other <0:
                 return(self/Phasor(abs(other),pi))
-            return Phasor(self._mag/other,self._phase)
+            return Phasor(self.mag/other,self.phase)
         elif isinstance(other,complex):
             div = cart2pol(other)
-            return Phasor(self._mag/div._mag,self._phase-div._phase)
+            return Phasor(self.mag/div.mag,self.phase-div.phase)
         elif isinstance(other,Phasor):
-            return Phasor(self._mag/other._mag,self._phase-other._phase)
+            return Phasor(self.mag/other.mag,self.phase-other.phase)
 
     def __rtruediv__(self,other):
         if isinstance(other,(int,float)):
-            return Phasor(other/self._mag,-self._phase)
+            return Phasor(other/self.mag,-self.phase)
         elif isinstance(other,complex):
             div = cart2pol(other)
-            return Phasor(div._mag/self._mag,div._phase-self._phase)
+            return Phasor(div._mag/self.mag,div.phase-self.phase)
         elif isinstance(other,Phasor):
-            return Phasor(other._mag/self._mag,other._phase-self._phase)
+            return Phasor(other.mag/self.mag,other.phase-self.phase)
 
 
     def __abs__(self):
         return self._mag
     
     def __eq__(self,other):
-        if (self._mag == other.mag) and (self._phase == other.phase):
+        dif = self.mag - other.mag
+        if (self.mag == other.mag) and (self.phase == other.phase):
+            return True
+        elif (dif < 0.001) and (self.phase == other.phase):
             return True
         else:
             return False
 
     def __pow__(self,other):
         if(other,isinstance(other,int)):
-            return Phasor(self._mag**other,self._phase*other)
+            return Phasor(self.mag**other,self.phase*other)
 
 
     def get_cartesian(self):
-        m = self._mag
-        p = self._phase
+        m = self.mag
+        p = self.phase
         return m*(cos(p) + 1j*sin(p))
     
     def conjugate(self):
-        return Phasor(self._mag,-self._phase)
+        return Phasor(self.mag,-self.phase)
 
     def rotate(self,angle):
         """[Rotates a phasor by an angle]
@@ -189,10 +185,10 @@ class Phasor(object):
         Returns:
             [Phasor]: [A rotated Phasor]
         """        
-        return Phasor(self._mag,self._phase+angle)
+        return Phasor(self.mag,self.phase+angle)
 
     def scale(self,scalar):
-        return Phasor(scalar*self._mag,self._phase)
+        return Phasor(scalar*self.mag,self.phase)
 
     @property
     def mag(self):
