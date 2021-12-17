@@ -2,6 +2,22 @@
 from numpy import cos, sin, pi, sqrt, arctan2, angle
 import numpy as np
 
+
+
+def round_phase(phase):
+    phase = round(phase,4)
+    return phase
+
+def round_magnitude(mag):
+    dec = 4
+    if mag < 1:
+        dec = 9
+    if mag > 1 and mag < 10:
+        dec = 3
+    if mag > 10:
+        dec = 2
+    return round(mag,dec)
+
 def cart2pol(z : complex):
 
     if isinstance(z,(int,float)):
